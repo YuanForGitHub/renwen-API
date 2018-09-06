@@ -23,6 +23,7 @@ class LendController extends Controller
         return dd($arr);
     }
 
+    /** 向所有人展示申请 */
     public function show(){
         $time = Carbon::now();
         $year = $time->year;
@@ -53,6 +54,7 @@ class LendController extends Controller
     }
 
 
+    /** 展示自己的所有申请（前端分类展示） */
     public function check(){
         $time = Carbon::now();
         $year = $time->year;
@@ -152,8 +154,9 @@ class LendController extends Controller
             ->get();
 
 
+        // 存在重合，申请失败返回-1
         if($lend->count()>0){
-            return dd($lend->toArray());
+            return -1;
         }
 
         $lend = new Lend;
@@ -248,12 +251,31 @@ class LendController extends Controller
         $pdf->Output('t.pdf', 'I');//I输出、D下载
     }
 
+    /**
+     * 审核申请结果
+     * 1表示通过，0表示不通过
+     * 成功返回1
+     */
     public function judge(Request $request){
         //TODO: 判断是不是管理员
         $pass = request('pass');
         $id = request('id');
+        $reason = request('reason'); // 管理员驳回（或通过）理由
+
         $lend = Lend::find($id);
+        $lend->admin_reason = $reason;
         $lend->pass = $pass;
+        $lend->update();
+        return 1;
+    }
+
+    /** 撤回原先审核（重置） */
+    public function withdraw(Request $request){
+        $id = request('id');
+
+        $lend = Lend::find($id);
+        $lend->admin_reason = '';
+        $lend->pass = 0;
         $lend->update();
         return 1;
     }
