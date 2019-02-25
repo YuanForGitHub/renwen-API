@@ -97,13 +97,15 @@ class Controller extends BaseController
     }
 
     public function getToken(Request $request){
+        // 检查code是否正确返回
         if(!empty($this->config['info']) && !isset($this->config['info']['access_token'])){
             $error = '授权失败，请重新授权';
             return $error;
         }
+        
+        // 获取token
         $code = $request->input('code');
         $this->config['code'] = $code;
-
         if(!empty($code)){
             $url = self::OAUTH_TOKEN;
             $param = array(
@@ -120,6 +122,8 @@ class Controller extends BaseController
             if(!$this->checkInstitute($this->config['info']['access_token'])){
                 return '您的账号不是人文学院的易班账号，不能使用该应用，非常抱歉^_^;';
             }
+            
+            // 保存token信息，跳转主页
             session(['config'=>$this->config]);
             return redirect('http://www.scauwlb.top/renwen');
         }
@@ -138,12 +142,14 @@ class Controller extends BaseController
     }
 
     public function getInfo(Request $request){
+        // 从session中取出token
         $config = session('config');
         if(empty($config['info']['access_token'])){
             $error = '授权失败，请重新授权';
-//            return $error;
+            // return $error;
             return dd($request->session());
         }
+        
         $url = self::PUBLIC_OPTION.'user/me';
         $param = array();
         $param['access_token'] = $config['info']['access_token'];
@@ -156,9 +162,13 @@ class Controller extends BaseController
         if($lend_num > 0){
             $admin = true;
         }
+        
+        // 保存用户信息到session
         $config['user'] = $user;
         $config['admin'] = $admin;
         session(['config'=>$config]);
+        
+        // 返回用户信息
         return response()->json(['info'=>$user, 'admin'=>$admin]);
     }
 
